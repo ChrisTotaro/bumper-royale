@@ -92,11 +92,13 @@ namespace BumperRoyale.Match
                 GameObject car = Instantiate(isPlayer ? playerPrefab : botPrefab, position, rotation);
                 car.name = isPlayer ? "Player" : $"Bot {i}";
 
-                if (!isPlayer && botMaterials != null && botMaterials.Length > 0)
+                CarAppearance appearance = car.GetComponent<CarAppearance>();
+                if (appearance != null)
                 {
-                    CarAppearance appearance = car.GetComponent<CarAppearance>();
-                    if (appearance != null)
+                    if (!isPlayer && botMaterials != null && botMaterials.Length > 0)
                         appearance.SetColorMaterial(botMaterials[(i - 1) % botMaterials.Length]);
+                    else if (isPlayer && CarColorPreference.TryLoad(out Color playerColor))
+                        appearance.SetColor(playerColor);
                 }
 
                 CarMotor motor = car.GetComponent<CarMotor>();
