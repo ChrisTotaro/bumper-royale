@@ -19,10 +19,12 @@ namespace BumperRoyale.Setup
         public const string CarPhysicsMaterialPath = DataFolder + "/CarSlippery.asset";
         public const string ArenaScenePath = "Assets/Scenes/Arena.unity";
         public const string MainMenuScenePath = "Assets/Scenes/MainMenu.unity";
-        public const string ArenaDiscMeshPath = "Assets/Art/Meshes/ArenaDisc.asset";
+        private const string MeshFolder = "Assets/Art/Meshes";
+        public const string ArenaDiscMeshPath = MeshFolder + "/ArenaDisc.asset";
 
         // Enough sides that the arena edge reads as a true circle (max deviation ~5 mm at radius 15).
         private const int ArenaDiscSegments = 128;
+        private const int CarWheelSegments = 28;
 
         [MenuItem("Bumper Royale/Create CarStats Assets")]
         public static void CreateCarStatsAssets()
@@ -101,16 +103,56 @@ namespace BumperRoyale.Setup
         [MenuItem("Bumper Royale/Create Arena Disc Mesh")]
         public static void CreateArenaDiscMesh()
         {
-            EnsureFolder(Path.GetDirectoryName(ArenaDiscMeshPath).Replace('\\', '/'));
+            SaveMesh(ArenaDiscMeshPath, "ArenaDisc", mesh => BuildCylinder(mesh, ArenaDiscSegments));
+        }
 
-            Mesh mesh = AssetDatabase.LoadAssetAtPath<Mesh>(ArenaDiscMeshPath);
+        /// <summary>
+        /// Rounded-box and wheel meshes for the car prefab. Each rounded box is built at its real size
+        /// so the corner radius stays uniform (scaling a rounded box would squash the corners).
+        /// </summary>
+        [MenuItem("Bumper Royale/Create Car Meshes")]
+        public static void CreateCarMeshes()
+        {
+            const int corner = 4;
+            SaveMesh(MeshFolder + "/CarBody.asset", "CarBody",
+                mesh => BuildRoundedBox(mesh, new Vector3(1.66f, 0.46f, 2.6f), 0.16f, corner));
+            // Glass cabin with a body-colored roof slab on top, so the cabin sides read as windows.
+            SaveMesh(MeshFolder + "/CarCabin.asset", "CarCabin",
+                mesh => BuildRoundedBox(mesh, new Vector3(1.3f, 0.42f, 1.28f), 0.14f, corner));
+            SaveMesh(MeshFolder + "/CarRoof.asset", "CarRoof",
+                mesh => BuildRoundedBox(mesh, new Vector3(1.36f, 0.12f, 1.34f), 0.06f, corner));
+            SaveMesh(MeshFolder + "/CarBumper.asset", "CarBumper",
+                mesh => BuildRoundedBox(mesh, new Vector3(1.72f, 0.16f, 2.72f), 0.08f, corner));
+            SaveMesh(MeshFolder + "/CarWheel.asset", "CarWheel", mesh => BuildCylinder(mesh, CarWheelSegments));
+        }
+
+        private static void SaveMesh(string path, string name, System.Action<Mesh> build)
+        {
+            EnsureFolder(Path.GetDirectoryName(path).Replace('\\', '/'));
+
+            // Rebuild in place when the asset exists so its GUID (and every reference to it) is kept.
+            Mesh mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
             bool isNew = mesh == null;
             if (isNew)
-                mesh = new Mesh { name = "ArenaDisc" };
+                mesh = new Mesh { name = name };
+            mesh.Clear();
+            build(mesh);
+            mesh.RecalculateTangents();
+            mesh.RecalculateBounds();
 
+            if (isNew)
+                AssetDatabase.CreateAsset(mesh, path);
+            else
+                EditorUtility.SetDirty(mesh);
+            AssetDatabase.SaveAssets();
+            Debug.Log("Bumper Royale: mesh ready at " + path);
+        }
+
+        /// <summary>Cylinder along Y: radius 0.5, height 2, centered, like the built-in Cylinder.</summary>
+        private static void BuildCylinder(Mesh mesh, int n)
+        {
             const float radius = 0.5f;
             const float halfHeight = 1f;
-            int n = ArenaDiscSegments;
 
             var vertices = new List<Vector3>();
             var normals = new List<Vector3>();
@@ -170,20 +212,118 @@ namespace BumperRoyale.Setup
                 triangles.AddRange(new[] { b0, t0, t1, b0, t1, b1 });
             }
 
-            mesh.Clear();
             mesh.SetVertices(vertices);
             mesh.SetNormals(normals);
             mesh.SetUVs(0, uvs);
             mesh.SetTriangles(triangles, 0);
-            mesh.RecalculateTangents();
-            mesh.RecalculateBounds();
+        }
 
-            if (isNew)
-                AssetDatabase.CreateAsset(mesh, ArenaDiscMeshPath);
-            else
-                EditorUtility.SetDirty(mesh);
-            AssetDatabase.SaveAssets();
-            Debug.Log("Bumper Royale: arena disc mesh ready at " + ArenaDiscMeshPath);
+        /// <summary>
+        /// Box of the given size whose edges and corners are rounded with the given radius.
+        /// Each face is a grid that is dense near the edges; every grid point is pushed onto the
+        /// rounded surface, with <paramref name="cornerSegments"/> steps per 45 degrees of arc.
+        /// </summary>
+        private static void BuildRoundedBox(Mesh mesh, Vector3 size, float radius, int cornerSegments)
+        {
+            Vector3 half = size * 0.5f;
+            radius = Mathf.Min(radius, half.x, half.y, half.z);
+            Vector3 innerHalf = half - Vector3.one * radius;
+            float[][] coords =
+            {
+                EdgeDenseCoords(half.x, radius, cornerSegments),
+                EdgeDenseCoords(half.y, radius, cornerSegments),
+                EdgeDenseCoords(half.z, radius, cornerSegments),
+            };
+
+            var vertices = new List<Vector3>();
+            var normals = new List<Vector3>();
+            var uvs = new List<Vector2>();
+            var triangles = new List<int>();
+
+            for (int axis = 0; axis < 3; axis++)
+            {
+                int uAxis = (axis + 1) % 3;
+                int vAxis = (axis + 2) % 3;
+                float[] us = coords[uAxis];
+                float[] vs = coords[vAxis];
+
+                for (int sign = -1; sign <= 1; sign += 2)
+                {
+                    Vector3 outward = Vector3.zero;
+                    outward[axis] = sign;
+                    Vector3 uDir = Vector3.zero;
+                    uDir[uAxis] = 1f;
+                    Vector3 vDir = Vector3.zero;
+                    vDir[vAxis] = 1f;
+                    // Unity treats a triangle as front-facing when Cross(b - a, c - a) points outward.
+                    bool flip = Vector3.Dot(Vector3.Cross(vDir, uDir), outward) < 0f;
+
+                    int start = vertices.Count;
+                    for (int j = 0; j < vs.Length; j++)
+                    {
+                        for (int i = 0; i < us.Length; i++)
+                        {
+                            Vector3 p = Vector3.zero;
+                            p[axis] = sign * half[axis];
+                            p[uAxis] = us[i];
+                            p[vAxis] = vs[j];
+                            Vector3 inner = new Vector3(
+                                Mathf.Clamp(p.x, -innerHalf.x, innerHalf.x),
+                                Mathf.Clamp(p.y, -innerHalf.y, innerHalf.y),
+                                Mathf.Clamp(p.z, -innerHalf.z, innerHalf.z));
+                            Vector3 normal = (p - inner).normalized;
+                            vertices.Add(inner + normal * radius);
+                            normals.Add(normal);
+                            uvs.Add(new Vector2((float)i / (us.Length - 1), (float)j / (vs.Length - 1)));
+                        }
+                    }
+
+                    for (int j = 0; j < vs.Length - 1; j++)
+                    {
+                        for (int i = 0; i < us.Length - 1; i++)
+                        {
+                            int a = start + j * us.Length + i;
+                            int b = a + 1;
+                            int c = a + us.Length;
+                            int d = c + 1;
+                            if (flip)
+                                triangles.AddRange(new[] { a, d, c, a, b, d });
+                            else
+                                triangles.AddRange(new[] { a, c, d, a, d, b });
+                        }
+                    }
+                }
+            }
+
+            mesh.SetVertices(vertices);
+            mesh.SetNormals(normals);
+            mesh.SetUVs(0, uvs);
+            mesh.SetTriangles(triangles, 0);
+        }
+
+        /// <summary>
+        /// Face-grid coordinates from -half to half: even steps of arc angle in each rounded band,
+        /// and no extra points across the flat middle.
+        /// </summary>
+        private static float[] EdgeDenseCoords(float half, float radius, int segments)
+        {
+            var result = new List<float>();
+            float flat = half - radius;
+            // A face point radius * tan(angle) beyond the flat part lands at that angle on the arc.
+            // Each face covers 0-45 degrees of an edge's arc; the neighbouring face covers the rest.
+            for (int k = 0; k <= segments; k++)
+            {
+                float angle = (segments - k) / (float)segments * 45f * Mathf.Deg2Rad;
+                result.Add(-flat - radius * Mathf.Tan(angle));
+            }
+            for (int k = 0; k <= segments; k++)
+            {
+                float angle = k / (float)segments * 45f * Mathf.Deg2Rad;
+                float value = flat + radius * Mathf.Tan(angle);
+                if (value > result[result.Count - 1] + 1e-5f)
+                    result.Add(value);
+            }
+            return result.ToArray();
         }
 
         private static void EnsureFolder(string path)

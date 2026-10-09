@@ -58,10 +58,13 @@ The touch controls are Input System `OnScreenStick` and `OnScreenButton` compone
 - `Assets/Scenes/MainMenu.unity` is the main menu and Build Settings index 0. `Assets/Scenes/Arena.unity` is the game scene and index 1. `SampleScene.unity` is unused template content and can be removed.
 - `Assets/Scripts/<Feature>/`: game code (see the architecture section below).
 - `Assets/Prefabs/`: `PlayerCar.prefab` and `BotCar.prefab`. BotCar is a prefab variant of PlayerCar that swaps PlayerInputController for AIController and uses BotCarStats.
+  - Car visuals are children of the root, each with only a MeshFilter and MeshRenderer and no colliders. The single BoxCollider stays on the root.
+  - `Body` (painted), `Cabin` (glass), `Roof` (painted), `Bumper` (rubber band around the bottom), `Grille`, `Headlight_L/R`, `Taillight_L/R`, and `Wheel_FL/FR/RL/RR`, each wheel with a `Hub` child.
+  - The painted parts are CarAppearance's `colorRenderers`.
 - `Assets/Data/`: `PlayerCarStats.asset`, `BotCarStats.asset` (CarStats), `CarSlippery.asset` (car PhysicsMaterial).
-- `Assets/Materials/`: URP Lit materials (Arena, ArenaRim, Car_Player, Car_Bot1..5, CarBumper, CarDetail).
+- `Assets/Materials/`: URP Lit materials (Arena, ArenaRim, Car_Player, Car_Bot1..5, CarBumper, CarDetail (hubs), CarGlass, CarTire, and the emissive CarHeadlight and CarTaillight).
 - `Assets/Art/UI/TouchControls/`: joystick and boost button sprites (Kenney, CC0).
-- `Assets/Art/Meshes/ArenaDisc.asset`: smooth 128-sided cylinder (radius 0.5, height 2, the same size as the built-in Cylinder) used by the Platform, its MeshCollider and the Rim. Regenerate it with `Bumper Royale/Create Arena Disc Mesh`.
+- `Assets/Art/Meshes/ArenaDisc.asset`: smooth 128-sided cylinder (radius 0.5, height 2, the same size as the built-in Cylinder) used by the Platform, its MeshCollider and the Rim. Regenerate it with `Bumper Royale/Create Arena Disc Mesh`. The same folder holds the generated car meshes: `CarBody`, `CarCabin`, `CarRoof` and `CarBumper` (rounded boxes built at their real size, so don't scale them) and `CarWheel` (a 28-sided cylinder). Regenerate them with `Bumper Royale/Create Car Meshes`, which rebuilds them in place and keeps their GUIDs.
 - `Assets/Settings/`: URP pipeline, renderer and volume assets.
 - `Assets/Plugins/NuGet/`: NuGet dependencies of the Unity MCP plugin. Do not modify them.
 - `Assets/TutorialInfo/`: URP template readme content. It can be removed.
@@ -79,7 +82,7 @@ All game code is in the `BumperRoyale.*` namespaces, which match the folders.
 | `Car/` | `CarBoost` | Forward velocity impulse queued for FixedUpdate. Exposes `IsBoosting` for its duration, a cooldown, and `CooldownProgress` for the HUD |
 | `Car/` | `CarKnockback` | On a car-to-car collision, the rammer pushes the other car. The push grows with relative impact speed and with the rammer's share of the closing speed, is multiplied when the rammer is boosting, is capped, and stuns the victim so it slides. It uses the rammer's stats |
 | `Car/` | `CarElimination` | Static registry of live cars (`Active`). Eliminates a car when it enters a `KillZone` or falls below a height. Raises the static `AnyEliminated` event, disables input, and destroys the car after a delay |
-| `Car/` | `CarAppearance` | Renderers that show the team color. `SetColorMaterial()` is used for bots. `SetColor()` sets any color through a per-car material copy and is used for the player and the showcase |
+| `Car/` | `CarAppearance` | Renderers that show the team color (Body and Roof). `SetColorMaterial()` is used for bots. `SetColor()` sets any color through a per-car material copy and is used for the player and the showcase |
 | `Car/` | `CarColorPreference` | The player's saved body color (PlayerPrefs key `BumperRoyale.PlayerCarColor`). MatchManager applies it to the player car |
 | `Player/` | `PlayerInputController` | Reads `Player/Move` and `Player/Jump` from the project-wide actions, with a keyboard fallback |
 | `AI/` | `AIController` | Retargets periodically, preferring near cars and cars close to the edge (aggression makes the choice less random). It leads its aim and boosts when lined up and in range. Edge avoidance projects its velocity ahead (`aiEdgeLookahead`), then blends its heading toward the center and brakes or reverses |
@@ -91,10 +94,10 @@ All game code is in the `BumperRoyale.*` namespaces, which match the folders.
 | `Menu/` | `MainMenuController` | Main menu PLAY and CAR tabs. It toggles `PlayPanel`, `CarPanel` and the 3D `CarShowcase`. The Play button loads `gameSceneName` ("Arena") |
 | `Garage/` | `CarShowcase` | Spawns a display-only copy of PlayerCar (gameplay components stripped, respecting RequireComponent) on a pedestal. It keeps the car at a viewport position, auto-spins it, and handles `Drag()` (yaw, plus pitch clamped to a range) |
 | `Garage/` | `ShowcaseDragArea` | Invisible UI surface whose drags rotate the showcase |
-| `Garage/` | `GarageController` | Links the ColorPicker to the showcased car and saves the color |
-| `UI/` | `ColorPicker`, `ColorPickerArea` | Reusable HSV picker: a saturation/value square and a hue bar, with textures generated at runtime, plus preset swatches created at runtime |
+| `Garage/` | `GarageController` | Links the ColorPicker tiles to the showcased car and saves the color |
+| `UI/` | `ColorPicker` | A grid of color tiles (10 standard colors in `colors`), created at runtime in a GridLayoutGroup container. The selected tile gets a white frame |
 | `Setup/Editor/` | `PlayModeStartScene` | `[InitializeOnLoad]`: sets `EditorSceneManager.playModeStartScene` to MainMenu. It is toggled by a menu item and stored per machine in EditorPrefs (on by default) |
-| `Setup/Editor/` | `BumperRoyaleSetup` | `Bumper Royale/...` menu items that create the CarStats assets, the car PhysicsMaterial and the arena disc mesh, and set Build Settings (MainMenu 0, Arena 1). Each is safe to re-run |
+| `Setup/Editor/` | `BumperRoyaleSetup` | `Bumper Royale/...` menu items that create the CarStats assets, the car PhysicsMaterial, the arena disc mesh and the car meshes, and set Build Settings (MainMenu 0, Arena 1). Each is safe to re-run |
 
 Scene contents (`Arena.unity`): Main Camera (CameraController), Directional Light, Arena (ArenaBounds, with Platform using the ArenaDisc mesh and a MeshCollider of the same mesh, and a Rim with the same mesh and no collider), KillZone (BoxCollider trigger 200×2×200 at y = -6), MatchManager, HUD (Canvas), and EventSystem (InputSystemUIInputModule). Cars are **not** placed in the scene. MatchManager spawns them at runtime.
 
@@ -104,7 +107,7 @@ Scene contents (`MainMenu.unity`): Main Camera (solid-colour background), Direct
 - `PlayPanel`: `TitleText` and `PlayButton`
 - `CarPanel`: GarageController, plus
   - `DragArea`: covers the screen left of the picker, with `HintText`
-  - `PickerPanel`: ColorPicker, `Header`, `SaturationValue`, `Hue` and `Swatches`
+  - `PickerPanel`: ColorPicker, `Header` and `Tiles` (a 5×2 GridLayoutGroup of 108 px cells)
 
 HUD hierarchy: the Canvas is Screen Space Overlay, with CanvasScaler set to scale with screen size (reference 1920×1080, match 0.5).
 - `RemainingText`: top-left
@@ -136,7 +139,7 @@ Touch-control art is in `Assets/Art/UI/TouchControls/`. It comes from Kenney's "
 - **Touch controls** (scene, `HUD/TouchControls`): sizes and positions on the `Joystick` and `BoostButton` RectTransforms. The stick's throw distance is `Movement Range` on the `Knob`'s OnScreenStick (110). Boost ring tints are `boostReadyColor` and `boostChargingColor`, and icon tints are `boostIconReadyColor` and `boostIconChargingColor`, all on HUDController.
 - **`Assets/Data/CarSlippery.asset`**: car friction (0.05, combine Minimum) and bounciness (0.15)
 - **Rigidbody on the prefabs**: mass 10, interpolation, continuous dynamic collision
-- **Car showcase** (MainMenu, `CarShowcase`): `viewportPosition`, `distance`, `degreesPerScreenHeight`, `startYaw`/`startPitch`, `minPitch`/`maxPitch`, `autoSpinSpeed`, `autoSpinDelay`. Preset swatch colors are `presetColors` on `PickerPanel`'s ColorPicker.
+- **Car showcase** (MainMenu, `CarShowcase`): `viewportPosition`, `distance`, `degreesPerScreenHeight`, `startYaw`/`startPitch`, `minPitch`/`maxPitch`, `autoSpinSpeed`, `autoSpinDelay`. The tile colors are `colors` on `PickerPanel`'s ColorPicker.
 
 When you change a tuning default, update **both** the asset values and the field initializer in `CarStats.cs` (and the bot overrides in `BumperRoyaleSetup.CreateCarStatsAssets`), so new assets match.
 

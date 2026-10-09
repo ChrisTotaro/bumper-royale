@@ -11,6 +11,8 @@ namespace BumperRoyale.Garage
     /// </summary>
     public class CarShowcase : MonoBehaviour
     {
+        private const float MaxSpinStep = 0.1f;
+
         [SerializeField] private GameObject carPrefab;
         [Tooltip("Rotated by dragging. The car is centered on it.")]
         [SerializeField] private Transform pivot;
@@ -27,7 +29,8 @@ namespace BumperRoyale.Garage
         [Header("Rotation")]
         [Tooltip("Degrees turned by dragging across the full screen height.")]
         [SerializeField] private float degreesPerScreenHeight = 270f;
-        [SerializeField] private float startYaw = 145f;
+        [Tooltip("0 shows the front of the car.")]
+        [SerializeField] private float startYaw = 35f;
         [SerializeField] private float startPitch = 20f;
         [SerializeField] private float minPitch = -5f;
         [SerializeField] private float maxPitch = 60f;
@@ -64,8 +67,9 @@ namespace BumperRoyale.Garage
 
         private void LateUpdate()
         {
+            // Capped step: the first frame after a scene load (or an app resume) can be seconds long.
             if (Time.unscaledTime - lastDragTime > autoSpinDelay)
-                yaw += autoSpinSpeed * Time.unscaledDeltaTime;
+                yaw += autoSpinSpeed * Mathf.Min(Time.unscaledDeltaTime, MaxSpinStep);
 
             Transform cam = viewCamera.transform;
             pivot.position = viewCamera.ViewportToWorldPoint(

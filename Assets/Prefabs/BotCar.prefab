@@ -12,14 +12,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: BotCar
       objectReference: {fileID: 0}
-    - target: {fileID: 2788071765169351214, guid: 867fe24404d8d2e499f6552a5356b72c, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
-      value: 
-      objectReference: {fileID: 2100000, guid: 149d4af195d744c4b9d552f8857555a7, type: 2}
     - target: {fileID: 4428734252527670079, guid: 867fe24404d8d2e499f6552a5356b72c, type: 3}
       propertyPath: stats
       value: 
       objectReference: {fileID: 11400000, guid: c23cc98912530324b9b6ff42878e77cd, type: 2}
+    - target: {fileID: 6456060946950530502, guid: 867fe24404d8d2e499f6552a5356b72c, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 149d4af195d744c4b9d552f8857555a7, type: 2}
     - target: {fileID: 7036894867690495287, guid: 867fe24404d8d2e499f6552a5356b72c, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -60,7 +60,7 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7127466305967726094, guid: 867fe24404d8d2e499f6552a5356b72c, type: 3}
+    - target: {fileID: 8935062667230952635, guid: 867fe24404d8d2e499f6552a5356b72c, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 149d4af195d744c4b9d552f8857555a7, type: 2}
