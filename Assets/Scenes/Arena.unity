@@ -435,11 +435,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ring: {fileID: 875407518}
-  radius: 1.75
+  radius: 1.9
   surfaceOffset: 0.02
   maxGroundDistance: 1.5
-  pulseAmount: 0.06
-  pulseRate: 1.5
 --- !u!4 &311766554
 Transform:
   m_ObjectHideFlags: 0

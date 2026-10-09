@@ -85,7 +85,7 @@ All game code is in the `BumperRoyale.*` namespaces, which match the folders.
 | `Car/` | `CarAppearance` | Renderers that show the team color (Body and Roof). `SetColorMaterial()` is used for bots. `SetColor()` sets any color through a per-car material copy and is used for the player and the showcase |
 | `Car/` | `CarColorPreference` | The player's saved body color (PlayerPrefs key `BumperRoyale.PlayerCarColor`). MatchManager applies it to the player car |
 | `Player/` | `PlayerInputController` | Reads `Player/Move` and `Player/Jump` from the project-wide actions, with a keyboard fallback |
-| `Player/` | `PlayerIndicator` | Pulsing ring on the ground under the player's car, like the player marker in sports games. Polls `MatchManager.Instance.Player`, raycasts down to lie flat on the surface, and hides when there's no ground below or the player is eliminated |
+| `Player/` | `PlayerIndicator` | Static ring on the ground under the player's car, like the player marker in sports games. Polls `MatchManager.Instance.Player`, raycasts down to lie flat on the surface, and hides when there's no ground below or the player is eliminated |
 | `AI/` | `AIController` | Retargets periodically, preferring near cars and cars close to the edge (aggression makes the choice less random). It leads its aim and boosts when lined up and in range. Edge avoidance projects its velocity ahead (`aiEdgeLookahead`), then blends its heading toward the center and brakes or reverses |
 | `Arena/` | `ArenaBounds` | Arena center and radius (static `Instance`), used by the AI and spawning |
 | `Arena/` | `KillZone` | Marker on the trigger collider below the arena |
@@ -142,7 +142,7 @@ Touch-control art is in `Assets/Art/UI/TouchControls/`. It comes from Kenney's "
 - **Touch controls** (scene, `HUD/TouchControls`): sizes and positions on the `Joystick` and `BoostButton` RectTransforms. The stick's throw distance is `Movement Range` on the `Knob`'s OnScreenStick (110). Boost ring tints are `boostReadyColor` and `boostChargingColor`, and icon tints are `boostIconReadyColor` and `boostIconChargingColor`, all on HUDController.
 - **`Assets/Data/CarSlippery.asset`**: car friction (0.05, combine Minimum) and bounciness (0.15)
 - **Rigidbody on the prefabs**: mass 10, interpolation, continuous dynamic collision
-- **PlayerIndicator** (Arena): `radius`, `pulseAmount`, `pulseRate`, `surfaceOffset`. The ring color is `_BaseColor` on `Assets/Materials/PlayerRing.mat`.
+- **PlayerIndicator** (Arena): `radius` (1.9), `surfaceOffset`. The ring color is `_BaseColor` on `Assets/Materials/PlayerRing.mat`.
 - **Car showcase** (MainMenu): screen positions are `homeCarViewport` and `carPanelCarViewport` on MainMenuController (keep `HintText`'s anchor x equal to the latter). On `CarShowcase`: `moveSmoothTime`, `distance`, `degreesPerScreenHeight`, `startYaw`/`startPitch`, `minPitch`/`maxPitch`, `autoSpinSpeed`, `autoSpinDelay`. The tile colors are `colors` on `PickerPanel`'s ColorPicker.
 
 When you change a tuning default, update **both** the asset values and the field initializer in `CarStats.cs` (and the bot overrides in `BumperRoyaleSetup.CreateCarStatsAssets`), so new assets match.
