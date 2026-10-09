@@ -31,6 +31,9 @@ namespace BumperRoyale.Match
         [SerializeField] private float countdownStepSeconds = 1f;
         [SerializeField] private float goLabelSeconds = 0.8f;
 
+        [Tooltip("Scene loaded by ExitToMenu(). Must be in Build Settings.")]
+        [SerializeField] private string menuSceneName = "MainMenu";
+
         [Header("References")]
         [SerializeField] private CameraController cameraController;
 
@@ -165,6 +168,11 @@ namespace BumperRoyale.Match
         public void Restart()
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
+
+        public void ExitToMenu()
+        {
+            SceneManager.LoadScene(menuSceneName);
         }
     }
 }

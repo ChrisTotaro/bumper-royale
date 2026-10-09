@@ -41,7 +41,7 @@ Unity 6 URP game. Playable prototype: 3D bumper cars on a flat circular arena wi
 
 ## How to run
 
-Open `Assets/Scenes/MainMenu.unity`, press Play, then tap **PLAY**. To skip the menu while testing, open `Assets/Scenes/Arena.unity` directly.
+Press Play, then tap **PLAY**. The editor always starts Play mode from `MainMenu.unity`, whichever scene is open, just as a build does. This is set by `PlayModeStartScene`. To play the open scene directly (e.g. to test the Arena without the menu), untick **Bumper Royale/Start Play Mode From Main Menu**.
 
 | Action | Touch (mobile) | Keyboard | Gamepad |
 |---|---|---|---|
@@ -49,6 +49,7 @@ Open `Assets/Scenes/MainMenu.unity`, press Play, then tap **PLAY**. To skip the 
 | Steer | Joystick left/right | A/D or Left/Right | Left stick |
 | Boost (has a cooldown) | BOOST button (bottom-right) | Space (`Player/Jump`) | South button |
 | Restart | Tap Restart on the result panel | Click | |
+| Back to main menu | Tap Menu on the result panel | Click | |
 
 The touch controls are Input System `OnScreenStick` and `OnScreenButton` components. They drive a virtual gamepad's `<Gamepad>/leftStick` and `<Gamepad>/buttonSouth`, which the project-wide `Player/Move` and `Player/Jump` actions already read. That's why `PlayerInputController` has no touch-specific code. In the editor you can use them with the mouse.
 
@@ -84,14 +85,15 @@ All game code is in the `BumperRoyale.*` namespaces, which match the folders.
 | `AI/` | `AIController` | Retargets periodically, preferring near cars and cars close to the edge (aggression makes the choice less random). It leads its aim and boosts when lined up and in range. Edge avoidance projects its velocity ahead (`aiEdgeLookahead`), then blends its heading toward the center and brakes or reverses |
 | `Arena/` | `ArenaBounds` | Arena center and radius (static `Instance`), used by the AI and spawning |
 | `Arena/` | `KillZone` | Marker on the trigger collider below the arena |
-| `Match/` | `MatchManager` | Spawns the player and bots evenly on a circle facing the center. Runs Countdown → Playing → Ended, with a 3-2-1-GO countdown during which every motor has `InputEnabled = false`. The player being eliminated means Defeat; the player being the last car means Victory. `Restart()` reloads the scene |
+| `Match/` | `MatchManager` | Spawns the player and bots evenly on a circle facing the center. Runs Countdown → Playing → Ended, with a 3-2-1-GO countdown during which every motor has `InputEnabled = false`. The player being eliminated means Defeat; the player being the last car means Victory. `Restart()` reloads the scene, and `ExitToMenu()` loads `menuSceneName` ("MainMenu") |
 | `CameraRig/` | `CameraController` | Fixed-angle camera that looks at a point lerped between the arena center and the player (`followFactor`) |
-| `UI/` | `HUDController` | Polls MatchManager each frame: players remaining, countdown label, the boost cooldown (radial `boostFill` ring plus `boostIcon` tint on the BOOST button), and a result panel with a Restart button (listener added in code) |
+| `UI/` | `HUDController` | Polls MatchManager each frame: players remaining, countdown label, the boost cooldown (radial `boostFill` ring plus `boostIcon` tint on the BOOST button), and a result panel with Restart and Menu buttons (listeners added in code) |
 | `Menu/` | `MainMenuController` | Main menu PLAY and CAR tabs. It toggles `PlayPanel`, `CarPanel` and the 3D `CarShowcase`. The Play button loads `gameSceneName` ("Arena") |
 | `Garage/` | `CarShowcase` | Spawns a display-only copy of PlayerCar (gameplay components stripped, respecting RequireComponent) on a pedestal. It keeps the car at a viewport position, auto-spins it, and handles `Drag()` (yaw, plus pitch clamped to a range) |
 | `Garage/` | `ShowcaseDragArea` | Invisible UI surface whose drags rotate the showcase |
 | `Garage/` | `GarageController` | Links the ColorPicker to the showcased car and saves the color |
 | `UI/` | `ColorPicker`, `ColorPickerArea` | Reusable HSV picker: a saturation/value square and a hue bar, with textures generated at runtime, plus preset swatches created at runtime |
+| `Setup/Editor/` | `PlayModeStartScene` | `[InitializeOnLoad]`: sets `EditorSceneManager.playModeStartScene` to MainMenu. It is toggled by a menu item and stored per machine in EditorPrefs (on by default) |
 | `Setup/Editor/` | `BumperRoyaleSetup` | `Bumper Royale/...` menu items that create the CarStats assets, the car PhysicsMaterial and the arena disc mesh, and set Build Settings (MainMenu 0, Arena 1). Each is safe to re-run |
 
 Scene contents (`Arena.unity`): Main Camera (CameraController), Directional Light, Arena (ArenaBounds, with Platform using the ArenaDisc mesh and a MeshCollider of the same mesh, and a Rim with the same mesh and no collider), KillZone (BoxCollider trigger 200×2×200 at y = -6), MatchManager, HUD (Canvas), and EventSystem (InputSystemUIInputModule). Cars are **not** placed in the scene. MatchManager spawns them at runtime.
@@ -114,7 +116,7 @@ HUD hierarchy: the Canvas is Screen Space Overlay, with CanvasScaler set to scal
     - `BoostFill`: `boost_ring` sprite, Filled Radial360 from the top. This is the cooldown ring
     - `BoostIcon`: `boost_icon` (fire), tinted by HUDController: orange when ready, grey while recharging
     - `Label`: "BOOST" caption below the button
-- `ResultPanel`: `ResultTitle`, `ResultSubtitle`, `RestartButton`
+- `ResultPanel`: `ResultTitle`, `ResultSubtitle`, `RestartButton` (left) and `MenuButton` (right)
 
 Touch-control art is in `Assets/Art/UI/TouchControls/`. It comes from Kenney's "Mobile Controls" pack (CC0, license file alongside; crediting Kenney is optional). It was imported as Sprite, uncompressed, with no mipmaps. When choosing art, use the pack's Large (2×) PNGs at a resolution at least as large as the on-screen size. The pack's SVGs approximate circles with quadratic curves and rasterize slightly squarish. The full pack (Styles A–H, icons, highlights) is downloadable from kenney.nl/assets/mobile-controls if more variants are needed.
 
@@ -127,7 +129,7 @@ Touch-control art is in `Assets/Art/UI/TouchControls/`. It comes from Kenney's "
   - Boost: `boostForce`, `boostDuration`, `boostCooldown`
   - Knockback: `minImpactSpeed`, `knockbackBase`, `knockbackPerRelativeSpeed`, `boostKnockbackMultiplier`, `maxKnockback`, `knockbackUpward`, `knockbackStunDuration`, `stunnedGripFactor`
   - AI (read from BotCarStats): `aggression`, `targetRetargetInterval`, `edgeAvoidMargin`, `edgeAvoidStrength`, `aiEdgeLookahead`, `aiBoostRange`, `aiBoostAngle`, `aiSteerAngleForFullInput`
-- **MatchManager** (scene object): `totalCars`, `spawnRadius`, `spawnHeight`, `botMaterials`, `countdownStepSeconds`, `goLabelSeconds`
+- **MatchManager** (scene object): `totalCars`, `spawnRadius`, `spawnHeight`, `botMaterials`, `countdownStepSeconds`, `goLabelSeconds`, `menuSceneName`
 - **ArenaBounds** (Arena object): `radius`. Keep it in sync with the Platform scale (30 → radius 15).
 - **CameraController** (Main Camera): `pitch`, `yaw`, `distance`, `followFactor`, `smoothTime`
 - **CarElimination** (car prefabs): `fallbackKillHeight`, `destroyDelay`
@@ -156,7 +158,7 @@ Tuning history: knockback stacks on top of the physics momentum transfer. Large 
 
 ## Testing through MCP
 
-- Enter and exit Play mode with `script-execute`: `EditorApplication.isPlaying = true/false`.
+- Enter and exit Play mode with `script-execute`: `EditorApplication.isPlaying = true/false`. Play mode starts in MainMenu (see `PlayModeStartScene`). To test a match, invoke the PlayButton's `onClick` or call `SceneManager.LoadScene("Arena")` from the update callback.
 - MCP calls return instantly, so to observe gameplay over time, register an `EditorApplication.update` callback in a `script-execute` class. Have it sample state (e.g. `CarElimination.Active` positions or `MatchManager.Instance.State`), `Debug.Log` with a unique prefix, and exit Play mode when done. Then wait in Bash and grep `%LOCALAPPDATA%/Unity/Editor/Editor.log` for that prefix.
 - To screenshot the game view, render `Camera.main` into a `RenderTexture` during Play mode and write a PNG to the scratchpad. To include the HUD, temporarily switch the Canvas to `ScreenSpaceCamera` with `worldCamera = Camera.main`, then switch it back. Use a phone aspect (e.g. 1560×720) to check the mobile layout. `ScreenCapture.CaptureScreenshot` fails when the editor is in the background, and `screenshot-isolated` frames a single object, so neither is useful for the game view.
 - To test the touch controls, call `OnScreenStick.OnPointerDown`/`OnDrag`/`OnPointerUp` and `OnScreenButton.OnPointerDown`/`OnPointerUp` with fake `PointerEventData`, then check how the player car moves.

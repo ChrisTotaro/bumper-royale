@@ -6,7 +6,8 @@ using UnityEngine.UI;
 namespace BumperRoyale.UI
 {
     /// <summary>
-    /// In-match HUD: players remaining, countdown, boost meter and the Victory/Defeat panel with Restart.
+    /// In-match HUD: players remaining, countdown, boost meter and the Victory/Defeat panel with
+    /// Restart and Menu buttons.
     /// Reads state from MatchManager each frame.
     /// </summary>
     public class HUDController : MonoBehaviour
@@ -19,6 +20,7 @@ namespace BumperRoyale.UI
         [SerializeField] private Text resultTitleText;
         [SerializeField] private Text resultSubtitleText;
         [SerializeField] private Button restartButton;
+        [SerializeField] private Button menuButton;
 
         [SerializeField] private Color victoryColor = new Color(1f, 0.85f, 0.1f);
         [SerializeField] private Color defeatColor = new Color(1f, 0.3f, 0.3f);
@@ -33,11 +35,13 @@ namespace BumperRoyale.UI
         {
             resultPanel.SetActive(false);
             restartButton.onClick.AddListener(OnRestartClicked);
+            menuButton.onClick.AddListener(OnMenuClicked);
         }
 
         private void OnDestroy()
         {
             restartButton.onClick.RemoveListener(OnRestartClicked);
+            menuButton.onClick.RemoveListener(OnMenuClicked);
         }
 
         private void Update()
@@ -82,6 +86,11 @@ namespace BumperRoyale.UI
         private void OnRestartClicked()
         {
             MatchManager.Instance?.Restart();
+        }
+
+        private void OnMenuClicked()
+        {
+            MatchManager.Instance?.ExitToMenu();
         }
     }
 }
