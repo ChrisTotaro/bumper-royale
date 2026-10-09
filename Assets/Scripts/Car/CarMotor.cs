@@ -77,6 +77,12 @@ namespace BumperRoyale.Car
             float grip = IsStunned ? stats.lateralGrip * stats.stunnedGripFactor : stats.lateralGrip;
             float lateral = Vector3.Dot(body.linearVelocity, transform.right);
             body.AddForce(-transform.right * (lateral * grip), ForceMode.Acceleration);
+
+            // Overspeed damping: bleed off horizontal speed above the cap (from hits or boosts).
+            Vector3 horizontal = Vector3.ProjectOnPlane(body.linearVelocity, Vector3.up);
+            float excess = horizontal.magnitude - stats.maxSpeed;
+            if (excess > 0f)
+                body.AddForce(-horizontal.normalized * (excess * stats.overspeedDrag), ForceMode.Acceleration);
         }
 
         private bool CheckGround(out Vector3 normal)

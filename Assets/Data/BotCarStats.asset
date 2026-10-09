@@ -21,22 +21,25 @@ MonoBehaviour:
   steerAtLowSpeedFactor: 0.5
   steerResponsiveness: 10
   lateralGrip: 6
+  overspeedDrag: 2.5
   centerOfMassOffset: {x: 0, y: -0.4, z: 0}
   groundCheckDistance: 0.35
-  boostForce: 12
+  boostForce: 7
   boostDuration: 0.6
   boostCooldown: 3
   minImpactSpeed: 1.5
-  knockbackBase: 3
-  knockbackPerRelativeSpeed: 0.8
-  boostKnockbackMultiplier: 1.8
-  knockbackUpward: 0.15
-  knockbackStunDuration: 0.6
-  stunnedGripFactor: 0.1
-  aggression: 0.7
+  knockbackBase: 1
+  knockbackPerRelativeSpeed: 0.25
+  boostKnockbackMultiplier: 1.5
+  maxKnockback: 6
+  knockbackUpward: 0.1
+  knockbackStunDuration: 0.35
+  stunnedGripFactor: 0.25
+  aggression: 0.6
   targetRetargetInterval: 2.5
   edgeAvoidMargin: 4
-  edgeAvoidStrength: 1.5
+  edgeAvoidStrength: 2
+  aiEdgeLookahead: 0.45
   aiBoostRange: 7
   aiBoostAngle: 12
   aiSteerAngleForFullInput: 35

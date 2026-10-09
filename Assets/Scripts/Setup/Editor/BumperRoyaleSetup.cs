@@ -36,6 +36,9 @@ namespace BumperRoyale.Setup
                 // Bots are a touch slower than the player so the player has an edge.
                 bot.maxSpeed = 12.5f;
                 bot.acceleration = 16f;
+                bot.aggression = 0.6f;
+                bot.edgeAvoidMargin = 5f;
+                bot.edgeAvoidStrength = 2f;
                 AssetDatabase.CreateAsset(bot, BotStatsPath);
             }
 
@@ -57,7 +60,7 @@ namespace BumperRoyale.Setup
 
             material.staticFriction = 0.05f;
             material.dynamicFriction = 0.05f;
-            material.bounciness = 0.3f;
+            material.bounciness = 0.15f;
             material.frictionCombine = PhysicsMaterialCombine.Minimum;
             material.bounceCombine = PhysicsMaterialCombine.Average;
             EditorUtility.SetDirty(material);

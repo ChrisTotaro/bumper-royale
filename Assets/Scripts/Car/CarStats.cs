@@ -29,6 +29,8 @@ namespace BumperRoyale.Car
         public float steerResponsiveness = 10f;
         [Tooltip("How strongly sideways sliding is cancelled while grounded (1/s). Higher = grippier.")]
         public float lateralGrip = 6f;
+        [Tooltip("Damping (1/s) on horizontal speed above maxSpeed while grounded, so hits and boosts are bursts rather than launches.")]
+        public float overspeedDrag = 2.5f;
 
         [Header("Physics")]
         [Tooltip("Rigidbody center of mass, local space. Lower = more stable on the arena.")]
@@ -38,7 +40,7 @@ namespace BumperRoyale.Car
 
         [Header("Boost")]
         [Tooltip("Instant forward velocity added by a boost (m/s).")]
-        public float boostForce = 12f;
+        public float boostForce = 7f;
         [Tooltip("How long a boost counts as 'boosting' for knockback (s).")]
         public float boostDuration = 0.6f;
         [Tooltip("Time between boosts (s).")]
@@ -48,17 +50,19 @@ namespace BumperRoyale.Car
         [Tooltip("Approach speed (m/s) below which a contact is not treated as a ram.")]
         public float minImpactSpeed = 1.5f;
         [Tooltip("Flat knockback velocity applied to the rammed car (m/s).")]
-        public float knockbackBase = 3f;
+        public float knockbackBase = 1f;
         [Tooltip("Extra knockback per m/s of relative impact speed.")]
-        public float knockbackPerRelativeSpeed = 0.8f;
+        public float knockbackPerRelativeSpeed = 0.25f;
         [Tooltip("Knockback multiplier when the rammer is boosting.")]
-        public float boostKnockbackMultiplier = 1.8f;
+        public float boostKnockbackMultiplier = 1.5f;
+        [Tooltip("Upper limit for the extra knockback velocity, after the boost multiplier (m/s).")]
+        public float maxKnockback = 6f;
         [Tooltip("Upward share of the knockback direction (0 = flat).")]
-        public float knockbackUpward = 0.15f;
+        public float knockbackUpward = 0.1f;
         [Tooltip("How long a rammed car loses grip so it slides (s).")]
-        public float knockbackStunDuration = 0.6f;
+        public float knockbackStunDuration = 0.35f;
         [Tooltip("Grip multiplier while stunned by a hit.")]
-        [Range(0f, 1f)] public float stunnedGripFactor = 0.1f;
+        [Range(0f, 1f)] public float stunnedGripFactor = 0.25f;
 
         [Header("AI")]
         [Tooltip("0..1. Higher = more throttle, more boosting and prefers the closest target.")]
@@ -69,6 +73,8 @@ namespace BumperRoyale.Car
         public float edgeAvoidMargin = 4f;
         [Tooltip("How strongly the edge-avoid direction overrides the attack direction.")]
         public float edgeAvoidStrength = 1.5f;
+        [Tooltip("Seconds of current velocity bots project ahead when checking for the edge.")]
+        public float aiEdgeLookahead = 0.7f;
         [Tooltip("Max distance to target (m) at which a bot will boost.")]
         public float aiBoostRange = 7f;
         [Tooltip("Max heading error (degrees) at which a bot will boost.")]

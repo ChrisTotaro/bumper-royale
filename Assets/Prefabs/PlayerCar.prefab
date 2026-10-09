@@ -15,6 +15,8 @@ GameObject:
   - component: {fileID: 8333740222052780826}
   - component: {fileID: 8979799151310474951}
   - component: {fileID: 35035589249629216}
+  - component: {fileID: 8843061393130708104}
+  - component: {fileID: 211525822193970692}
   m_Layer: 0
   m_Name: PlayerCar
   m_TagString: Untagged
@@ -145,6 +147,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveActionPath: Player/Move
   boostActionPath: Player/Jump
+--- !u!114 &8843061393130708104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 992616308682762643}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2bb49626e78898643a990b6d5c81aea8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &211525822193970692
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 992616308682762643}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45b63c1e034cb2e439a3af3c9e2c5605, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fallbackKillHeight: -15
+  destroyDelay: 3
 --- !u!1 &1148449650701158987
 GameObject:
   m_ObjectHideFlags: 0
