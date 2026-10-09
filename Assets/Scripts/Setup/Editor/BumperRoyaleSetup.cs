@@ -18,6 +18,7 @@ namespace BumperRoyale.Setup
         public const string BotStatsPath = DataFolder + "/BotCarStats.asset";
         public const string CarPhysicsMaterialPath = DataFolder + "/CarSlippery.asset";
         public const string ArenaScenePath = "Assets/Scenes/Arena.unity";
+        public const string MainMenuScenePath = "Assets/Scenes/MainMenu.unity";
 
         [MenuItem("Bumper Royale/Create CarStats Assets")]
         public static void CreateCarStatsAssets()
@@ -68,21 +69,25 @@ namespace BumperRoyale.Setup
             Debug.Log("Bumper Royale: car physics material ready at " + CarPhysicsMaterialPath);
         }
 
-        [MenuItem("Bumper Royale/Add Arena To Build Settings")]
-        public static void AddArenaToBuildSettings()
+        [MenuItem("Bumper Royale/Configure Build Settings")]
+        public static void ConfigureBuildSettings()
         {
-            if (!File.Exists(ArenaScenePath))
+            string[] ordered = { MainMenuScenePath, ArenaScenePath };
+            foreach (string path in ordered)
             {
-                Debug.LogError("Bumper Royale: " + ArenaScenePath + " does not exist yet.");
-                return;
+                if (!File.Exists(path))
+                {
+                    Debug.LogError("Bumper Royale: " + path + " does not exist yet.");
+                    return;
+                }
             }
 
             List<EditorBuildSettingsScene> scenes = EditorBuildSettings.scenes
-                .Where(s => s.path != ArenaScenePath && s.path != "Assets/Scenes/SampleScene.unity")
+                .Where(s => !ordered.Contains(s.path) && s.path != "Assets/Scenes/SampleScene.unity")
                 .ToList();
-            scenes.Insert(0, new EditorBuildSettingsScene(ArenaScenePath, true));
+            scenes.InsertRange(0, ordered.Select(p => new EditorBuildSettingsScene(p, true)));
             EditorBuildSettings.scenes = scenes.ToArray();
-            Debug.Log("Bumper Royale: Arena is scene 0 in Build Settings.");
+            Debug.Log("Bumper Royale: Build Settings are MainMenu (0), Arena (1).");
         }
 
         private static void EnsureFolder(string path)

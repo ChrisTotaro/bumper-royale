@@ -41,7 +41,7 @@ Unity 6 URP game. Playable prototype: 3D bumper cars on a flat circular arena wi
 
 ## How to run
 
-Open `Assets/Scenes/Arena.unity` and press Play.
+Open `Assets/Scenes/MainMenu.unity`, press Play, then tap **PLAY**. To skip the menu while testing, open `Assets/Scenes/Arena.unity` directly.
 
 | Action | Touch (mobile) | Keyboard | Gamepad |
 |---|---|---|---|
@@ -54,7 +54,7 @@ The touch controls are Input System `OnScreenStick` and `OnScreenButton` compone
 
 ## Project layout
 
-- `Assets/Scenes/Arena.unity` is the game scene and Build Settings index 0. `SampleScene.unity` is unused template content and can be removed.
+- `Assets/Scenes/MainMenu.unity` is the main menu and Build Settings index 0. `Assets/Scenes/Arena.unity` is the game scene and index 1. `SampleScene.unity` is unused template content and can be removed.
 - `Assets/Scripts/<Feature>/`: game code (see the architecture section below).
 - `Assets/Prefabs/`: `PlayerCar.prefab` and `BotCar.prefab`. BotCar is a prefab variant of PlayerCar that swaps PlayerInputController for AIController and uses BotCarStats.
 - `Assets/Data/`: `PlayerCarStats.asset`, `BotCarStats.asset` (CarStats), `CarSlippery.asset` (car PhysicsMaterial).
@@ -85,9 +85,12 @@ All game code is in the `BumperRoyale.*` namespaces, which match the folders.
 | `Match/` | `MatchManager` | Spawns the player and bots evenly on a circle facing the center. Runs Countdown → Playing → Ended, with a 3-2-1-GO countdown during which every motor has `InputEnabled = false`. The player being eliminated means Defeat; the player being the last car means Victory. `Restart()` reloads the scene |
 | `CameraRig/` | `CameraController` | Fixed-angle camera that looks at a point lerped between the arena center and the player (`followFactor`) |
 | `UI/` | `HUDController` | Polls MatchManager each frame: players remaining, countdown label, the boost cooldown (radial `boostFill` ring plus `boostIcon` tint on the BOOST button), and a result panel with a Restart button (listener added in code) |
-| `Setup/Editor/` | `BumperRoyaleSetup` | `Bumper Royale/...` menu items that create the CarStats assets and the car PhysicsMaterial and fix Build Settings. Each is safe to re-run |
+| `Menu/` | `MainMenuController` | Main menu scene. The Play button loads `gameSceneName` ("Arena") |
+| `Setup/Editor/` | `BumperRoyaleSetup` | `Bumper Royale/...` menu items that create the CarStats assets and the car PhysicsMaterial and set Build Settings (MainMenu 0, Arena 1). Each is safe to re-run |
 
 Scene contents (`Arena.unity`): Main Camera (CameraController), Directional Light, Arena (ArenaBounds, with Platform using a MeshCollider and a Rim with no collider), KillZone (BoxCollider trigger 200×2×200 at y = -6), MatchManager, HUD (Canvas), and EventSystem (InputSystemUIInputModule). Cars are **not** placed in the scene. MatchManager spawns them at runtime.
+
+Scene contents (`MainMenu.unity`): Main Camera (solid-colour background), EventSystem (InputSystemUIInputModule), and MenuCanvas. MenuCanvas uses the same CanvasScaler settings as the HUD and holds MainMenuController, `Background`, `TitleText`, and `PlayButton` (520×180) with its `Label`.
 
 HUD hierarchy: the Canvas is Screen Space Overlay, with CanvasScaler set to scale with screen size (reference 1920×1080, match 0.5).
 - `RemainingText`: top-left
