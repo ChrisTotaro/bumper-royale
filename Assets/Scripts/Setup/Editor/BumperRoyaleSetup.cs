@@ -126,6 +126,13 @@ namespace BumperRoyale.Setup
             SaveMesh(MeshFolder + "/CarWheel.asset", "CarWheel", mesh => BuildCylinder(mesh, CarWheelSegments));
         }
 
+        /// <summary>Flat ring (outer radius 1) facing up, for the player marker under the car.</summary>
+        [MenuItem("Bumper Royale/Create Player Ring Mesh")]
+        public static void CreatePlayerRingMesh()
+        {
+            SaveMesh(MeshFolder + "/PlayerRing.asset", "PlayerRing", mesh => BuildRing(mesh, 0.84f, 64));
+        }
+
         private static void SaveMesh(string path, string name, System.Action<Mesh> build)
         {
             EnsureFolder(Path.GetDirectoryName(path).Replace('\\', '/'));
@@ -210,6 +217,41 @@ namespace BumperRoyale.Setup
                 int b1 = b0 + 2;
                 int t1 = b0 + 3;
                 triangles.AddRange(new[] { b0, t0, t1, b0, t1, b1 });
+            }
+
+            mesh.SetVertices(vertices);
+            mesh.SetNormals(normals);
+            mesh.SetUVs(0, uvs);
+            mesh.SetTriangles(triangles, 0);
+        }
+
+        /// <summary>Single-sided flat ring in the XZ plane, outer radius 1, facing +Y.</summary>
+        private static void BuildRing(Mesh mesh, float innerRadius, int n)
+        {
+            var vertices = new List<Vector3>();
+            var normals = new List<Vector3>();
+            var uvs = new List<Vector2>();
+            var triangles = new List<int>();
+
+            for (int i = 0; i <= n; i++)
+            {
+                float angle = 2f * Mathf.PI * i / n;
+                Vector3 dir = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+                float u = (float)i / n;
+                vertices.Add(dir * innerRadius);
+                normals.Add(Vector3.up);
+                uvs.Add(new Vector2(u, 0f));
+                vertices.Add(dir);
+                normals.Add(Vector3.up);
+                uvs.Add(new Vector2(u, 1f));
+            }
+            for (int i = 0; i < n; i++)
+            {
+                int in0 = i * 2;
+                int out0 = in0 + 1;
+                int in1 = in0 + 2;
+                int out1 = in0 + 3;
+                triangles.AddRange(new[] { in0, out1, out0, in0, in1, out1 });
             }
 
             mesh.SetVertices(vertices);
