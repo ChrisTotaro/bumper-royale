@@ -5,9 +5,9 @@ using UnityEngine;
 namespace BumperRoyale.Garage
 {
     /// <summary>
-    /// Shows the player car on a turntable in the main menu. Spawns a display-only copy of the car
-    /// prefab (gameplay components stripped), keeps it at a fixed spot on screen, spins it slowly,
-    /// and lets the player rotate it with <see cref="Drag"/>.
+    /// Shows the player car, in its saved color, on a turntable in the main menu. Spawns a
+    /// display-only copy of the car prefab (gameplay components stripped), keeps it at a spot on
+    /// screen, spins it slowly, and lets the player rotate it with <see cref="Drag"/>.
     /// </summary>
     public class CarShowcase : MonoBehaviour
     {
@@ -21,10 +21,12 @@ namespace BumperRoyale.Garage
         [SerializeField] private Camera viewCamera;
 
         [Header("Placement")]
-        [Tooltip("Where the car's center sits on screen (0..1 viewport coordinates).")]
-        [SerializeField] private Vector2 viewportPosition = new Vector2(0.3f, 0.5f);
+        [Tooltip("Where the car's center sits on screen (0..1 viewport coordinates). Can be changed at runtime with ViewportPosition; the car glides there.")]
+        [SerializeField] private Vector2 viewportPosition = new Vector2(0.66f, 0.45f);
+        [Tooltip("Time to glide to a new viewport position (s).")]
+        [SerializeField] private float moveSmoothTime = 0.25f;
         [Tooltip("Distance from the camera to the car's center (m).")]
-        [SerializeField] private float distance = 5.5f;
+        [SerializeField] private float distance = 6.5f;
 
         [Header("Rotation")]
         [Tooltip("Degrees turned by dragging across the full screen height.")]
@@ -43,6 +45,15 @@ namespace BumperRoyale.Garage
         private float yaw;
         private float pitch;
         private float lastDragTime = float.NegativeInfinity;
+        private Vector2 currentViewport;
+        private Vector2 viewportVelocity;
+
+        /// <summary>Target screen position of the car (0..1 viewport coordinates).</summary>
+        public Vector2 ViewportPosition
+        {
+            get => viewportPosition;
+            set => viewportPosition = value;
+        }
 
         /// <summary>The displayed car. Spawned on first access.</summary>
         public CarAppearance Appearance
@@ -59,6 +70,7 @@ namespace BumperRoyale.Garage
         {
             yaw = startYaw;
             pitch = startPitch;
+            currentViewport = viewportPosition;
             if (viewCamera == null)
                 viewCamera = Camera.main;
             if (appearance == null)
@@ -71,9 +83,12 @@ namespace BumperRoyale.Garage
             if (Time.unscaledTime - lastDragTime > autoSpinDelay)
                 yaw += autoSpinSpeed * Mathf.Min(Time.unscaledDeltaTime, MaxSpinStep);
 
+            currentViewport = Vector2.SmoothDamp(currentViewport, viewportPosition, ref viewportVelocity,
+                moveSmoothTime, Mathf.Infinity, Mathf.Min(Time.unscaledDeltaTime, MaxSpinStep));
+
             Transform cam = viewCamera.transform;
             pivot.position = viewCamera.ViewportToWorldPoint(
-                new Vector3(viewportPosition.x, viewportPosition.y, distance));
+                new Vector3(currentViewport.x, currentViewport.y, distance));
             // Yaw spins the car on the turntable; positive pitch tilts its top toward the camera.
             Quaternion facingCamera = Quaternion.LookRotation(-cam.forward, cam.up);
             pivot.rotation = Quaternion.AngleAxis(-pitch, cam.right)
@@ -120,6 +135,8 @@ namespace BumperRoyale.Garage
             pivot.rotation = savedRotation;
 
             appearance = car.GetComponent<CarAppearance>();
+            if (CarColorPreference.TryLoad(out Color saved))
+                appearance.SetColor(saved);
         }
 
         private static Bounds GetRendererBounds(GameObject root)

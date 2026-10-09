@@ -15,10 +15,8 @@ namespace BumperRoyale.Garage
 
         private void Start()
         {
-            CarAppearance car = showcase.Appearance;
-            if (CarColorPreference.TryLoad(out Color saved))
-                car.SetColor(saved);
-            colorPicker.SetColor(car.Color);
+            // The showcase car already wears the saved color.
+            colorPicker.SetColor(showcase.Appearance.Color);
 
             colorPicker.ColorChanged += OnColorChanged;
         }

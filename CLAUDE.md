@@ -4,7 +4,7 @@ Unity 6 URP game. Playable prototype: 3D bumper cars on a flat circular arena wi
 
 **Target platform: mobile, landscape only.** Player Settings allow only Landscape Left and Right (auto-rotation). The primary controls are on-screen touch controls: a joystick at bottom-left and a BOOST button at bottom-right. Keyboard and gamepad also work, for testing in the editor. Design UI for a landscape phone (roughly 16:9 to 20:9) with large touch targets.
 
-**Out of scope for now:** multiplayer, IAP, shop, progression, accounts, backend, ads. Don't add these unless asked. The only menu and cosmetic features are the main menu's PLAY and CAR tabs (the CAR tab sets the body color).
+**Out of scope for now:** multiplayer, IAP, shop, progression, accounts, backend, ads. Don't add these unless asked. The only menu and cosmetic features are the main menu's PLAY and CAR options (CAR sets the body color).
 
 ## Tech stack
 
@@ -92,8 +92,8 @@ All game code is in the `BumperRoyale.*` namespaces, which match the folders.
 | `Match/` | `MatchManager` | Spawns the player and bots evenly on a circle facing the center. Runs Countdown → Playing → Ended, with a 3-2-1-GO countdown during which every motor has `InputEnabled = false`. The player being eliminated means Defeat; the player being the last car means Victory. `Restart()` reloads the scene, and `ExitToMenu()` loads `menuSceneName` ("MainMenu") |
 | `CameraRig/` | `CameraController` | Fixed-angle camera that looks at a point lerped between the arena center and the player (`followFactor`) |
 | `UI/` | `HUDController` | Polls MatchManager each frame: players remaining, countdown label, the boost cooldown (radial `boostFill` ring plus `boostIcon` tint on the BOOST button), and a result panel with Restart and Menu buttons (listeners added in code) |
-| `Menu/` | `MainMenuController` | Main menu PLAY and CAR tabs. It toggles `PlayPanel`, `CarPanel` and the 3D `CarShowcase`. The Play button loads `gameSceneName` ("Arena") |
-| `Garage/` | `CarShowcase` | Spawns a display-only copy of PlayerCar (gameplay components stripped, respecting RequireComponent) on a pedestal. It keeps the car at a viewport position, auto-spins it, and handles `Drag()` (yaw, plus pitch clamped to a range) |
+| `Menu/` | `MainMenuController` | Vertical main menu (Slay the Spire style) under the title. PLAY loads `gameSceneName` ("Arena"). CAR toggles `CarPanel` and its orange active marker, and moves the showcase car between `homeCarViewport` and `carPanelCarViewport` |
+| `Garage/` | `CarShowcase` | Spawns a display-only copy of PlayerCar (gameplay components stripped, respecting RequireComponent) on a pedestal. Applies the saved color. It glides the car to `ViewportPosition` (SmoothDamp), auto-spins it, and handles `Drag()` (yaw, plus pitch clamped to a range) |
 | `Garage/` | `ShowcaseDragArea` | Invisible UI surface whose drags rotate the showcase |
 | `Garage/` | `GarageController` | Links the ColorPicker tiles to the showcased car and saves the color |
 | `UI/` | `ColorPicker` | A grid of color tiles (10 standard colors in `colors`), created at runtime in a GridLayoutGroup container. The selected tile gets a white frame |
@@ -102,13 +102,15 @@ All game code is in the `BumperRoyale.*` namespaces, which match the folders.
 
 Scene contents (`Arena.unity`): Main Camera (CameraController), Directional Light, Arena (ArenaBounds, with Platform using the ArenaDisc mesh and a MeshCollider of the same mesh, and a Rim with the same mesh and no collider), KillZone (BoxCollider trigger 200×2×200 at y = -6), MatchManager, PlayerIndicator (with a `Ring` child: the PlayerRing mesh and the unlit PlayerRing material, shadows off), HUD (Canvas), and EventSystem (InputSystemUIInputModule). Cars are **not** placed in the scene. MatchManager spawns them at runtime.
 
-Scene contents (`MainMenu.unity`): Main Camera (solid-colour background), Directional Light, `CarShowcase` (inactive until the CAR tab is selected, with `Pivot/Pedestal` using the ArenaDisc mesh), EventSystem (InputSystemUIInputModule), and MenuCanvas. MenuCanvas uses the same CanvasScaler settings as the HUD and holds:
-- MainMenuController
-- `TabBar`: `PlayTab` and `CarTab`
-- `PlayPanel`: `TitleText` and `PlayButton`
-- `CarPanel`: GarageController, plus
-  - `DragArea`: covers the screen left of the picker, with `HintText`
-  - `PickerPanel`: ColorPicker, `Header` and `Tiles` (a 5×2 GridLayoutGroup of 108 px cells)
+Scene contents (`MainMenu.unity`): Main Camera (solid-colour background), Directional Light, `CarShowcase` (always active as the menu backdrop, with `Pivot/Pedestal` using the ArenaDisc mesh), EventSystem (InputSystemUIInputModule), and MenuCanvas. MenuCanvas uses the same CanvasScaler settings as the HUD and holds MainMenuController and these children, in sibling order:
+- `DragArea`: invisible, covering everything right of the 700 px menu column, so the car can be rotated anytime
+- `MenuColumn` (left edge):
+  - `Title`: "BUMPER\nROYALE", 150 pt
+  - `Divider`: orange bar
+  - `MenuList`: VerticalLayoutGroup with `PlayItem` and `CarItem` (560×120 invisible touch targets, 96 pt labels; `CarItem` has an `ActiveMarker`)
+- `CarPanel`: GarageController, shown while CAR is open
+  - `HintText`: anchored at x 0.49, under the car's car-panel position
+  - `PickerPanel`: 600×400 on the right, with ColorPicker, `Header` and `Tiles` (a 5×2 GridLayoutGroup of 90 px cells)
 
 HUD hierarchy: the Canvas is Screen Space Overlay, with CanvasScaler set to scale with screen size (reference 1920×1080, match 0.5).
 - `RemainingText`: top-left
@@ -141,7 +143,7 @@ Touch-control art is in `Assets/Art/UI/TouchControls/`. It comes from Kenney's "
 - **`Assets/Data/CarSlippery.asset`**: car friction (0.05, combine Minimum) and bounciness (0.15)
 - **Rigidbody on the prefabs**: mass 10, interpolation, continuous dynamic collision
 - **PlayerIndicator** (Arena): `radius`, `pulseAmount`, `pulseRate`, `surfaceOffset`. The ring color is `_BaseColor` on `Assets/Materials/PlayerRing.mat`.
-- **Car showcase** (MainMenu, `CarShowcase`): `viewportPosition`, `distance`, `degreesPerScreenHeight`, `startYaw`/`startPitch`, `minPitch`/`maxPitch`, `autoSpinSpeed`, `autoSpinDelay`. The tile colors are `colors` on `PickerPanel`'s ColorPicker.
+- **Car showcase** (MainMenu): screen positions are `homeCarViewport` and `carPanelCarViewport` on MainMenuController (keep `HintText`'s anchor x equal to the latter). On `CarShowcase`: `moveSmoothTime`, `distance`, `degreesPerScreenHeight`, `startYaw`/`startPitch`, `minPitch`/`maxPitch`, `autoSpinSpeed`, `autoSpinDelay`. The tile colors are `colors` on `PickerPanel`'s ColorPicker.
 
 When you change a tuning default, update **both** the asset values and the field initializer in `CarStats.cs` (and the bot overrides in `BumperRoyaleSetup.CreateCarStatsAssets`), so new assets match.
 
