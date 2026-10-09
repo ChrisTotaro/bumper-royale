@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a57f64cb743c7649a6fe89e8ddb03c0, type: 3}
+  m_Name: PlayerCarStats
+  m_EditorClassIdentifier: 
+  maxSpeed: 14
+  reverseMaxSpeed: 7
+  acceleration: 18
+  coastDrag: 1.2
+  steerSpeed: 150
+  fullSteerSpeed: 4
+  steerAtLowSpeedFactor: 0.5
+  steerResponsiveness: 10
+  lateralGrip: 6
+  centerOfMassOffset: {x: 0, y: -0.4, z: 0}
+  groundCheckDistance: 0.35
+  boostForce: 12
+  boostDuration: 0.6
+  boostCooldown: 3
+  minImpactSpeed: 1.5
+  knockbackBase: 3
+  knockbackPerRelativeSpeed: 0.8
+  boostKnockbackMultiplier: 1.8
+  knockbackUpward: 0.15
+  knockbackStunDuration: 0.6
+  stunnedGripFactor: 0.1
+  aggression: 0.7
+  targetRetargetInterval: 2.5
+  edgeAvoidMargin: 4
+  edgeAvoidStrength: 1.5
+  aiBoostRange: 7
+  aiBoostAngle: 12
+  aiSteerAngleForFullInput: 35
