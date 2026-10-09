@@ -60,6 +60,7 @@ The touch controls are Input System `OnScreenStick` and `OnScreenButton` compone
 - `Assets/Data/`: `PlayerCarStats.asset`, `BotCarStats.asset` (CarStats), `CarSlippery.asset` (car PhysicsMaterial).
 - `Assets/Materials/`: URP Lit materials (Arena, ArenaRim, Car_Player, Car_Bot1..5, CarBumper, CarDetail).
 - `Assets/Art/UI/TouchControls/`: joystick and boost button sprites (Kenney, CC0).
+- `Assets/Art/Meshes/ArenaDisc.asset`: smooth 128-sided cylinder (radius 0.5, height 2, the same size as the built-in Cylinder) used by the Platform, its MeshCollider and the Rim. Regenerate it with `Bumper Royale/Create Arena Disc Mesh`.
 - `Assets/Settings/`: URP pipeline, renderer and volume assets.
 - `Assets/Plugins/NuGet/`: NuGet dependencies of the Unity MCP plugin. Do not modify them.
 - `Assets/TutorialInfo/`: URP template readme content. It can be removed.
@@ -86,9 +87,9 @@ All game code is in the `BumperRoyale.*` namespaces, which match the folders.
 | `CameraRig/` | `CameraController` | Fixed-angle camera that looks at a point lerped between the arena center and the player (`followFactor`) |
 | `UI/` | `HUDController` | Polls MatchManager each frame: players remaining, countdown label, the boost cooldown (radial `boostFill` ring plus `boostIcon` tint on the BOOST button), and a result panel with a Restart button (listener added in code) |
 | `Menu/` | `MainMenuController` | Main menu scene. The Play button loads `gameSceneName` ("Arena") |
-| `Setup/Editor/` | `BumperRoyaleSetup` | `Bumper Royale/...` menu items that create the CarStats assets and the car PhysicsMaterial and set Build Settings (MainMenu 0, Arena 1). Each is safe to re-run |
+| `Setup/Editor/` | `BumperRoyaleSetup` | `Bumper Royale/...` menu items that create the CarStats assets, the car PhysicsMaterial and the arena disc mesh, and set Build Settings (MainMenu 0, Arena 1). Each is safe to re-run |
 
-Scene contents (`Arena.unity`): Main Camera (CameraController), Directional Light, Arena (ArenaBounds, with Platform using a MeshCollider and a Rim with no collider), KillZone (BoxCollider trigger 200×2×200 at y = -6), MatchManager, HUD (Canvas), and EventSystem (InputSystemUIInputModule). Cars are **not** placed in the scene. MatchManager spawns them at runtime.
+Scene contents (`Arena.unity`): Main Camera (CameraController), Directional Light, Arena (ArenaBounds, with Platform using the ArenaDisc mesh and a MeshCollider of the same mesh, and a Rim with the same mesh and no collider), KillZone (BoxCollider trigger 200×2×200 at y = -6), MatchManager, HUD (Canvas), and EventSystem (InputSystemUIInputModule). Cars are **not** placed in the scene. MatchManager spawns them at runtime.
 
 Scene contents (`MainMenu.unity`): Main Camera (solid-colour background), EventSystem (InputSystemUIInputModule), and MenuCanvas. MenuCanvas uses the same CanvasScaler settings as the HUD and holds MainMenuController, `Background`, `TitleText`, and `PlayButton` (520×180) with its `Label`.
 

@@ -19,6 +19,10 @@ namespace BumperRoyale.Setup
         public const string CarPhysicsMaterialPath = DataFolder + "/CarSlippery.asset";
         public const string ArenaScenePath = "Assets/Scenes/Arena.unity";
         public const string MainMenuScenePath = "Assets/Scenes/MainMenu.unity";
+        public const string ArenaDiscMeshPath = "Assets/Art/Meshes/ArenaDisc.asset";
+
+        // Enough sides that the arena edge reads as a true circle (max deviation ~5 mm at radius 15).
+        private const int ArenaDiscSegments = 128;
 
         [MenuItem("Bumper Royale/Create CarStats Assets")]
         public static void CreateCarStatsAssets()
@@ -88,6 +92,98 @@ namespace BumperRoyale.Setup
             scenes.InsertRange(0, ordered.Select(p => new EditorBuildSettingsScene(p, true)));
             EditorBuildSettings.scenes = scenes.ToArray();
             Debug.Log("Bumper Royale: Build Settings are MainMenu (0), Arena (1).");
+        }
+
+        /// <summary>
+        /// Smooth replacement for Unity's 20-sided built-in Cylinder, with the same dimensions
+        /// (radius 0.5, height 2, centered), so it can be swapped in without changing transforms.
+        /// </summary>
+        [MenuItem("Bumper Royale/Create Arena Disc Mesh")]
+        public static void CreateArenaDiscMesh()
+        {
+            EnsureFolder(Path.GetDirectoryName(ArenaDiscMeshPath).Replace('\\', '/'));
+
+            Mesh mesh = AssetDatabase.LoadAssetAtPath<Mesh>(ArenaDiscMeshPath);
+            bool isNew = mesh == null;
+            if (isNew)
+                mesh = new Mesh { name = "ArenaDisc" };
+
+            const float radius = 0.5f;
+            const float halfHeight = 1f;
+            int n = ArenaDiscSegments;
+
+            var vertices = new List<Vector3>();
+            var normals = new List<Vector3>();
+            var uvs = new List<Vector2>();
+            var triangles = new List<int>();
+
+            // Caps: a center vertex plus a ring, with planar UVs.
+            for (int cap = 0; cap < 2; cap++)
+            {
+                bool top = cap == 0;
+                float y = top ? halfHeight : -halfHeight;
+                Vector3 normal = top ? Vector3.up : Vector3.down;
+                int center = vertices.Count;
+                vertices.Add(new Vector3(0f, y, 0f));
+                normals.Add(normal);
+                uvs.Add(new Vector2(0.5f, 0.5f));
+                for (int i = 0; i < n; i++)
+                {
+                    float angle = 2f * Mathf.PI * i / n;
+                    float x = Mathf.Cos(angle) * radius;
+                    float z = Mathf.Sin(angle) * radius;
+                    vertices.Add(new Vector3(x, y, z));
+                    normals.Add(normal);
+                    uvs.Add(new Vector2(x + 0.5f, z + 0.5f));
+                }
+                for (int i = 0; i < n; i++)
+                {
+                    int a = center + 1 + i;
+                    int b = center + 1 + (i + 1) % n;
+                    if (top)
+                        triangles.AddRange(new[] { center, b, a });
+                    else
+                        triangles.AddRange(new[] { center, a, b });
+                }
+            }
+
+            // Side: its own vertices so the rim edge stays sharp while the wall shades smoothly.
+            int side = vertices.Count;
+            for (int i = 0; i <= n; i++)
+            {
+                float angle = 2f * Mathf.PI * i / n;
+                Vector3 outward = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+                float u = (float)i / n;
+                vertices.Add(outward * radius + Vector3.down * halfHeight);
+                normals.Add(outward);
+                uvs.Add(new Vector2(u, 0f));
+                vertices.Add(outward * radius + Vector3.up * halfHeight);
+                normals.Add(outward);
+                uvs.Add(new Vector2(u, 1f));
+            }
+            for (int i = 0; i < n; i++)
+            {
+                int b0 = side + i * 2;
+                int t0 = b0 + 1;
+                int b1 = b0 + 2;
+                int t1 = b0 + 3;
+                triangles.AddRange(new[] { b0, t0, t1, b0, t1, b1 });
+            }
+
+            mesh.Clear();
+            mesh.SetVertices(vertices);
+            mesh.SetNormals(normals);
+            mesh.SetUVs(0, uvs);
+            mesh.SetTriangles(triangles, 0);
+            mesh.RecalculateTangents();
+            mesh.RecalculateBounds();
+
+            if (isNew)
+                AssetDatabase.CreateAsset(mesh, ArenaDiscMeshPath);
+            else
+                EditorUtility.SetDirty(mesh);
+            AssetDatabase.SaveAssets();
+            Debug.Log("Bumper Royale: arena disc mesh ready at " + ArenaDiscMeshPath);
         }
 
         private static void EnsureFolder(string path)
