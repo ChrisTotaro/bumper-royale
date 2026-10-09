@@ -59,6 +59,7 @@ The touch controls are Input System `OnScreenStick` and `OnScreenButton` compone
 - `Assets/Prefabs/`: `PlayerCar.prefab` and `BotCar.prefab`. BotCar is a prefab variant of PlayerCar that swaps PlayerInputController for AIController and uses BotCarStats.
 - `Assets/Data/`: `PlayerCarStats.asset`, `BotCarStats.asset` (CarStats), `CarSlippery.asset` (car PhysicsMaterial).
 - `Assets/Materials/`: URP Lit materials (Arena, ArenaRim, Car_Player, Car_Bot1..5, CarBumper, CarDetail).
+- `Assets/Art/UI/TouchControls/`: joystick and boost button sprites (Kenney, CC0).
 - `Assets/Settings/`: URP pipeline, renderer and volume assets.
 - `Assets/Plugins/NuGet/`: NuGet dependencies of the Unity MCP plugin. Do not modify them.
 - `Assets/TutorialInfo/`: URP template readme content. It can be removed.
@@ -83,7 +84,7 @@ All game code is in the `BumperRoyale.*` namespaces, which match the folders.
 | `Arena/` | `KillZone` | Marker on the trigger collider below the arena |
 | `Match/` | `MatchManager` | Spawns the player and bots evenly on a circle facing the center. Runs Countdown → Playing → Ended, with a 3-2-1-GO countdown during which every motor has `InputEnabled = false`. The player being eliminated means Defeat; the player being the last car means Victory. `Restart()` reloads the scene |
 | `CameraRig/` | `CameraController` | Fixed-angle camera that looks at a point lerped between the arena center and the player (`followFactor`) |
-| `UI/` | `HUDController` | Polls MatchManager each frame: players remaining, countdown label, the boost cooldown shown as a radial fill on the BOOST button (`boostFill`), and a result panel with a Restart button (listener added in code) |
+| `UI/` | `HUDController` | Polls MatchManager each frame: players remaining, countdown label, the boost cooldown (radial `boostFill` ring plus `boostIcon` tint on the BOOST button), and a result panel with a Restart button (listener added in code) |
 | `Setup/Editor/` | `BumperRoyaleSetup` | `Bumper Royale/...` menu items that create the CarStats assets and the car PhysicsMaterial and fix Build Settings. Each is safe to re-run |
 
 Scene contents (`Arena.unity`): Main Camera (CameraController), Directional Light, Arena (ArenaBounds, with Platform using a MeshCollider and a Rim with no collider), KillZone (BoxCollider trigger 200×2×200 at y = -6), MatchManager, HUD (Canvas), and EventSystem (InputSystemUIInputModule). Cars are **not** placed in the scene. MatchManager spawns them at runtime.
@@ -92,14 +93,15 @@ HUD hierarchy: the Canvas is Screen Space Overlay, with CanvasScaler set to scal
 - `RemainingText`: top-left
 - `CountdownText`: center
 - `TouchControls`: full screen, and must stay below `ResultPanel` in sibling order so the panel blocks touches
-  - `Joystick`: base circle, 340 px, centered (300, 270) from the bottom-left
-    - `Knob`: 150 px, with `OnScreenStick`. Its `raycastPadding` of -95 makes the whole base grabbable
-  - `BoostButton`: 260 px, centered (-300, 270) from the bottom-right, with `OnScreenButton`
-    - `BoostFill`: radial fill
-    - `Label`
+  - `Joystick`: `joystick_pad` sprite, 340 px, centered (300, 270) from the bottom-left
+    - `Knob`: `joystick_knob` sprite, 150 px, with `OnScreenStick`. Its `raycastPadding` of -95 makes the whole pad grabbable
+  - `BoostButton`: `boost_button` sprite, 260 px, centered (-300, 270) from the bottom-right, with `OnScreenButton`
+    - `BoostFill`: `boost_ring` sprite, Filled Radial360 from the top. This is the cooldown ring
+    - `BoostIcon`: `boost_icon` (fire), tinted by HUDController: orange when ready, grey while recharging
+    - `Label`: "BOOST" caption below the button
 - `ResultPanel`: `ResultTitle`, `ResultSubtitle`, `RestartButton`
 
-Circles use the built-in `UI/Skin/Knob.psd` sprite.
+Touch-control art is in `Assets/Art/UI/TouchControls/`. It comes from Kenney's "Mobile Controls" pack (CC0, license file alongside; crediting Kenney is optional). It was imported as Sprite, uncompressed, with no mipmaps. When choosing art, use the pack's Large (2×) PNGs at a resolution at least as large as the on-screen size. The pack's SVGs approximate circles with quadratic curves and rasterize slightly squarish. The full pack (Styles A–H, icons, highlights) is downloadable from kenney.nl/assets/mobile-controls if more variants are needed.
 
 ## Where tuning values live
 
@@ -114,7 +116,7 @@ Circles use the built-in `UI/Skin/Knob.psd` sprite.
 - **ArenaBounds** (Arena object): `radius`. Keep it in sync with the Platform scale (30 → radius 15).
 - **CameraController** (Main Camera): `pitch`, `yaw`, `distance`, `followFactor`, `smoothTime`
 - **CarElimination** (car prefabs): `fallbackKillHeight`, `destroyDelay`
-- **Touch controls** (scene, `HUD/TouchControls`): sizes and positions on the `Joystick` and `BoostButton` RectTransforms. The stick's throw distance is `Movement Range` on the `Knob`'s OnScreenStick (110). Boost ring colors are `boostReadyColor` and `boostChargingColor` on HUDController.
+- **Touch controls** (scene, `HUD/TouchControls`): sizes and positions on the `Joystick` and `BoostButton` RectTransforms. The stick's throw distance is `Movement Range` on the `Knob`'s OnScreenStick (110). Boost ring tints are `boostReadyColor` and `boostChargingColor`, and icon tints are `boostIconReadyColor` and `boostIconChargingColor`, all on HUDController.
 - **`Assets/Data/CarSlippery.asset`**: car friction (0.05, combine Minimum) and bounciness (0.15)
 - **Rigidbody on the prefabs**: mass 10, interpolation, continuous dynamic collision
 

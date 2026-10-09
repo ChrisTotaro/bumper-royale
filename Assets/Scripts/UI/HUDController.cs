@@ -14,6 +14,7 @@ namespace BumperRoyale.UI
         [SerializeField] private Text remainingText;
         [SerializeField] private Text countdownText;
         [SerializeField] private Image boostFill;
+        [SerializeField] private Image boostIcon;
         [SerializeField] private GameObject resultPanel;
         [SerializeField] private Text resultTitleText;
         [SerializeField] private Text resultSubtitleText;
@@ -23,6 +24,8 @@ namespace BumperRoyale.UI
         [SerializeField] private Color defeatColor = new Color(1f, 0.3f, 0.3f);
         [SerializeField] private Color boostReadyColor = new Color(0.3f, 0.9f, 1f);
         [SerializeField] private Color boostChargingColor = new Color(0.4f, 0.4f, 0.5f);
+        [SerializeField] private Color boostIconReadyColor = new Color(1f, 0.55f, 0.1f);
+        [SerializeField] private Color boostIconChargingColor = new Color(0.55f, 0.6f, 0.68f);
 
         private CarBoost playerBoost;
 
@@ -61,8 +64,11 @@ namespace BumperRoyale.UI
                 playerBoost = match.Player.GetComponent<CarBoost>();
 
             float progress = playerBoost != null ? playerBoost.CooldownProgress : 0f;
+            bool ready = progress >= 1f;
             boostFill.fillAmount = progress;
-            boostFill.color = progress >= 1f ? boostReadyColor : boostChargingColor;
+            boostFill.color = ready ? boostReadyColor : boostChargingColor;
+            if (boostIcon != null)
+                boostIcon.color = ready ? boostIconReadyColor : boostIconChargingColor;
         }
 
         private void ShowResult(bool playerWon)
